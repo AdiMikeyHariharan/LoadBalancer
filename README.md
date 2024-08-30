@@ -23,5 +23,3 @@ Follow these steps to get started with the load balancer:
    Finally, configure your client to connect to the load balancer. Ensure that the client is set to send traffic to the load balancer’s address.
 
 By following these steps, you will be able to effectively utilize the load balancer to manage and distribute traffic across your servers.
-
-For more details on configuration and usage, refer to the [documentation](#) (link to detailed documentation or user guide if available).
