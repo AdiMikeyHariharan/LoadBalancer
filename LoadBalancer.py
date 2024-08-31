@@ -2,6 +2,7 @@ import sys
 import socket
 import select
 import random
+from collections import defaultdict
 
 
 ##########################################
@@ -12,8 +13,10 @@ import random
 '''
 ###########################################
 SERVER_POOL = [('127.0.0.1', 7777)]
+ACTIVE_CONNECTIONS = defaultdict(int)
+def least_connections():
 
-
+     return min(SERVER_POOL,key=lambda server : ACTIVE_CONNECTIONS[server])
 class LoadBalancer:
     flow_map = dict()
     socket_list = list()
@@ -56,6 +59,7 @@ class LoadBalancer:
             server_side_socket.connect((server_ip, server_port))
             print(f'Server side socket {server_side_socket.getsockname()} Initiated')
             print(f'Server Connected {server_side_socket.getsockname()} <======> {server_ip}:{server_port}')
+            ACTIVE_CONNECTIONS[(server_ip,server_port)] += 1
         except Exception as e:
             print(f'Cannot connect with remote server err: {e}')
             print(f'Closing connection with the client {client_addr}')
@@ -79,20 +83,21 @@ class LoadBalancer:
         ss_socket = self.flow_map[sock]
         self.socket_list.remove(sock)
         self.socket_list.remove(ss_socket)
+        ACTIVE_CONNECTIONS[(ss_socket.getpeername()[0], ss_socket.getpeername()[1])] -= 1
         sock.close()
         ss_socket.close()
-
         del self.flow_map[sock]
         del self.flow_map[ss_socket]
-
     def select_server(self, servers, algorithm):
         if algorithm == "random":
             return random.choice(servers)
+        if algorithm =="least connection":
+            return least_connections()
 
 
 if __name__ == "__main__":
     try:
-        LoadBalancer('localhost', 5555, 'random').start()
+        LoadBalancer('localhost', 5555, 'least connection').start()
     except KeyboardInterrupt:
         print("Ctrl - C - Exit Load Balancer")
         sys.exit(1)
